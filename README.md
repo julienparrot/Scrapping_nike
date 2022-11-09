@@ -47,7 +47,7 @@ L'objectif du projet est comprendre l'offre produit de Nike, sa composition en t
 Projet construit avec
 
 - :snake: Python
-- :earth: Jupyter Notebook
+- :new_moon_with_face: Jupyter Notebook
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
