@@ -1,39 +1,41 @@
-from selenium import webdriver
-from webdriver_manager.chrome import ChromeDriverManager
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from datetime import datetime
-import time
 import csv
 import re
+import time
+from datetime import datetime
+
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
+from webdriver_manager.chrome import ChromeDriverManager
+
 
 def nike_scrapper(url, gender, csv_file_name):
 
-    # Use ChromeDriveManager to open the webdriver to avoid version issues
+   
+    # Utilisez ChromeDriveManager pour ouvrir le pilote Web afin d'éviter les problèmes de version
     driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
-    # Go to the page that we want to scrape
+    # Allez à la page que nous voulons scrape
     driver.get(url)
 
-    # Click on United States button to enter the desired country on the pop-up
-    state_button = driver.find_element("xpath", '//button[@class="nav-btn p0-sm d-sm-b hf-geomismatch-btn-secondary hf-geomismatch-btn mt2-sm"]')
+    # Cliquez sur le bouton États-Unis pour entrer le pays souhaité dans la fenêtre contextuelle    state_button = driver.find_element("xpath", '//button[@class="nav-btn p0-sm d-sm-b hf-geomismatch-btn-secondary hf-geomismatch-btn mt2-sm"]')
     state_button.click()
     time.sleep(2)
-
-    # Go back to the page that we want to scrape
+  
+    # Revenir à la page que nous voulons scrape
     # driver.get("https://www.nike.com/w/mens-shoes-nik1zy7ok?sort=newest")
     driver.get(url)
 
-    # Csv file we will use to store data
+    # Csv qui va stocker les données
     file_name = csv_file_name
     csv_file = open(file_name, 'w', encoding='utf-8', newline='')
     writer = csv.writer(csv_file)
 
-    # Initialize an empty dictionary for the data
+    # Initialiser un dictionnaire vide pour les données
     product_dict = {}
 
-    # Write keys at the top of the file
+    # Écrire les clés en haut du fichier
     product_dict['id_'] = ""
     product_dict['gender'] = ""
     product_dict['title'] = ""
@@ -53,52 +55,49 @@ def nike_scrapper(url, gender, csv_file_name):
     product_dict['r_date'] = ""
     writer.writerow(product_dict.keys())
 
-    # Script to scroll until infinite scroll ends to load all products on the page
+    # Script pour faire défiler jusqu'à la fin du défilement infini pour charger tous les produits sur la page
     SCROLL_PAUSE_TIME = 2.0
 
     while True:
 
-        # Get scroll height
-        ### This is the difference. Moving this *inside* the loop
-        ### means that it checks if scrollTo is still scrolling 
+        
+        # Obtenir la hauteur de défilement
+        ### C'est la différence. Déplacer ceci * à l'intérieur * de la boucle
+        ### signifie qu'il vérifie si scrollTo défile toujours 
         last_height = driver.execute_script("return document.body.scrollHeight")
 
-        # Scroll down to bottom
+        # Scroll jusqu'au bouton
         driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
 
-        # Wait to load page
+        # attandre le load de la page
         time.sleep(SCROLL_PAUSE_TIME)
 
-        # Click on 'X' button to close news pop-up
+        # Clicker sur 'X' pour fermer la pop-up
         try:
           close_button1 = driver.find_element("xpath", '//button[@class="pre-modal-btn-close bg-transparent"]')
           close_button1.click()
         except:
           pass
 
-        # Calculate new scroll height and compare with last scroll height
+        # Calculer la nouvelle hauteur de défilement et comparer avec la dernière hauteur de défilement
         new_height = driver.execute_script("return document.body.scrollHeight")
         if new_height == last_height:
 
-            # try again (can be removed)
             driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
 
-            # Wait to load page
             time.sleep(SCROLL_PAUSE_TIME)
 
-            # Calculate new scroll height and compare with last scroll height
             new_height = driver.execute_script("return document.body.scrollHeight")
-
-            # check if the page height has remained the same
+          
+            # vérifie si la hauteur de la page est restée la même
             if new_height == last_height:
-                # if so, you are done
                 break
-            # if not, move on to the next loop
+            # passez à la boucle suivante
             else:
                 last_height = new_height
                 continue
 
-    # Click on 'X' button to close news pop-up
+    # Clicker sur 'X' pour fermer la pop-up
     try:
         cookie_button = driver.find_element("xpath", '//*[@data-var="acceptBtn2"]')
         cookie_button.click()
@@ -108,27 +107,27 @@ def nike_scrapper(url, gender, csv_file_name):
     except:
         pass
 
-    # Getting a list of all the products on the page based on their XPATH
+    
+    # Obtenir une liste de tous les produits sur la page en fonction de leur XPATH
     products = WebDriverWait(driver, 10).until(EC.presence_of_all_elements_located((By.XPATH,
                                 '//a[@class="product-card__link-overlay"]')))
 
-    # Extract the URL from each of the products elements
+    # Extraire l'URL de chacun des éléments produits
     urls = []
     for product in products:
         url = product.get_attribute('href')
         urls.append(url)
 
-    # Get the total number of product and print to compare with the number of URLs
-    total_products = driver.find_element("xpath", '//span[@class="wall-header__item_count"]').get_attribute('textContent')
+    # Obtenez le nombre total de produits et print pour comparer avec le nombre d'URL total_products = driver.find_element("xpath", '//span[@class="wall-header__item_count"]').get_attribute('textContent')
     total_products = re.findall('\d+', total_products)
     print("There are ", total_products, "products")
     print('We are scraping ', len(urls), "product urls")
-
-    # Looping through all products on the page
+    
+    # Boucle sur tous les produits de la page
     index = 1
 
     for url in urls:
-        # Click on 'X' button to close news pop-up
+        # Clicker sur 'X' pour fermer la pop-up
         try:
             close_button1 = driver.find_element("xpath", '//button[@class="pre-modal-btn-close bg-transparent"]')
             close_button1.click()
@@ -164,7 +163,7 @@ def nike_scrapper(url, gender, csv_file_name):
             description = ""
             description_long = ""
 
-        # Try to click review button and more button if it fails to find xpath put review as empty
+            # Essayez de cliquer sur le bouton de d'avis et sur le bouton plus s'il ne parvient pas à trouver xpath mettre l'avis comme vide        try:
         try:
             review_button = driver.find_element("xpath", "(//button[@class='css-1y5ubft panel-controls'])[2]")
             review_button.click()
@@ -173,13 +172,13 @@ def nike_scrapper(url, gender, csv_file_name):
                 more_button = driver.find_element("xpath", '//label[@for="More Reviews"]')
                 more_button.click()
                 try:
-
-                    # Get average score for product
+                
+                    # Obtenir un score moyen pour le produit
                     score = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH,
                                 "//span[@class='TTavgRate']"))).get_attribute('textContent')
                     score = re.findall("\d+\.\d+", score)[0]
 
-                    # Get the slider information
+                    # Obtenir les informations du curseur
                     try:
                         sliders = WebDriverWait(driver, 2).until(EC.presence_of_all_elements_located((By.XPATH,
                                     '//div[@class="TT4reviewRangeDot"]')))[:3]
@@ -190,18 +189,15 @@ def nike_scrapper(url, gender, csv_file_name):
                         comfort = ""
                         durability = ""
                     try:
-                        # 0 Runs Small - 100 Runs Big
                         size = slider_data[0]
-                        # 0 Uncomfortable - 100 Comfortable
                         comfort = slider_data[1]
-                        # 0 Not Durable - 100 Durable
                         durability = slider_data[2]
                     except:
                         size = ""
                         comfort = ""
                         durability = ""
 
-                    # Getting number of reviews to know how many times to click load more reviews
+                    # Obtenir le nombre d'avis pour savoir combien de fois cliquer pour charger plus d'avis n_reviews = driver.find_element("xpath", '//div[@class="TTreviewCount"]').get_attribute('textContent')
                     n_reviews = driver.find_element("xpath", '//div[@class="TTreviewCount"]').get_attribute('textContent')
                     n_reviews = float((re.findall(("\d+.\d+|\d+"), n_reviews)[0]).replace(",", ""))
                     reviews_per_click = 20
@@ -209,7 +205,7 @@ def nike_scrapper(url, gender, csv_file_name):
                     print("There are ", n_reviews, "reviews")
                     print("Clicking load more", times, "times")
                     index1 = 0
-                    # Loop to click load more, using .execute_script function because button is hidden
+                    # Boucle pour cliquer sur charger plus, en utilisant la fonction .execute_script car le bouton est masqué
                     while index1 < times:
                         try:
                             index1 += 1
@@ -226,7 +222,7 @@ def nike_scrapper(url, gender, csv_file_name):
                         except:
                             continue
 
-                    # Getting a list of all the reviews to loop through            
+                    # Obtenir une liste de tous les avis à parcourir           
                     reviews = WebDriverWait(driver, 3).until(EC.presence_of_all_elements_located((By.XPATH,
                                 '//div[@class="TTreview"]')))
 
@@ -263,8 +259,7 @@ def nike_scrapper(url, gender, csv_file_name):
                     print(type(e), e)
                     print(url)
             except:
-                # If there are no reviws save all the product info but keep the review fields blank
-                product_dict['id_'] = id_
+                # S'il n'y a pas d'avis, enregistrez toutes les informations sur le produit mais laissez les champs d'avis vides                product_dict['id_'] = id_
                 product_dict['gender'] = gender
                 product_dict['title'] = title
                 product_dict['url'] = url
@@ -283,8 +278,7 @@ def nike_scrapper(url, gender, csv_file_name):
                 product_dict['r_date'] = ""
                 writer.writerow(product_dict.values())
         except:
-            # If there are no reviws save all the product info but keep the review fields blank
-            product_dict['id_'] = id_
+            # S'il n'y a pas d'avis, enregistrez toutes les informations sur le produit mais laissez les champs d'avis vides            product_dict['id_'] = id_
             product_dict['gender'] = gender
             product_dict['title'] = title
             product_dict['url'] = url

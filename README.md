@@ -8,6 +8,7 @@
     Ce projet est une analyse de donnée scraper sur le site nike
     <br />
     <br />
+    <a href="https://docs.google.com/presentation/d/116PmWraxvXfvKLbyi3P-YUCR2K27g2SpeSG_gSfElJ4/edit?usp=sharing">Présentation projet slide</a>
   </p>
 </div>
 
