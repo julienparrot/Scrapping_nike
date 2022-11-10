@@ -81,7 +81,13 @@ python run
 
 3. run notebook
 
+Ouvrir **Terminal**, cd le nom du projet and et éxecuter la commande:
+
 ```sh
+pip install -r requirements.txt
+
+et
+
 python -m notebook
 ```
 
